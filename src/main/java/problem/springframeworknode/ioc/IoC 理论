@@ -1,0 +1,83 @@
+Ioc全称Inversion of Control，翻译为“控制反转”，它还有一个别名伟DI，即依赖注入
+理解控制反转的四个问题：
+1.谁控制谁？
+        在传统的开发模式下，我们都是采用直接 new 一个对象的方式来创建对象，也就是说你依赖的对象直接由你自己控制，但是有了 IoC 容器后，
+        则直接由 IoC 容器来控制。所以“谁控制谁”，当然是 IoC 容器控制对象。
+2.控制了什么？ 控制对象。
+3.为什么是反转？
+        没有 IoC 的时候我们都是在自己对象中主动去创建被依赖的对象，这是正转。但是有了 IoC 后，所依赖的对象直接由 IoC 容器创建后注入到被
+        注入的对象中，依赖的对象由原来的主动获取变成被动接受，所以是反转
+4.哪些方面反转？
+        所依赖对象的获取被反转了。
+
+1.IOC的定义：
+所谓Ioc,就是由于Spring Ioc容器来负责对象的生命周期和对象之间的关系
+eg:找女朋友，一般情况下我们是如何来找女朋友的呢？首先我们需要根据自己的需求（漂亮、身材好、性格好）找一个妹子，
+然后到处打听她的兴趣爱好、微信、电话号码，然后各种投其所好送其所要，最后追到手.
+(code:YoungMan)
+缺点：
+这就是我们通常做事的方式，如果我们需要某个对象，一般都是采用这种直接创建的方式(new BeautifulGirl())，这个过程复杂而又繁琐，
+而且我们必须要面对每个环节，而且使用完成之后我们还要复杂销毁它，这种情况下我们的对象与它所依赖的对象耦合在一起。
+进阶：
+这个给我们送东西的“人” 就是 IoC，在上面的例子中，它就相当于一个婚介公司，作为一个婚介公司它管理着很多男男女女的资料，当我们需要一个女朋友的时候，
+直接跟婚介公司提出我们的需求，婚介公司则会根据我们的需求提供一个妹子给我们，我们只需要负责谈恋爱，生猴子就行了。你看，这样是不是很简单明了。
+
+2.注入形式：
+    1.构造器注入：
+    YoungMan(BeautifulGirl beautifulGirl) {
+        this.beautifulGirl = beautifulGirl;
+    }
+
+    2.setter注入：
+    public class YoungMan {
+        private BeautifulGirl beautifulGirl;
+        public void setBeautifulGirl(BeautifulGirl beautifulGirl) {
+            this.beautifulGirl = beautifulGirl;
+        }
+    }
+
+    3.接口注入：
+    接口方式注入显得比较霸道，因为它需要被依赖的对象实现不必要的接口，带有侵入性。
+    一般都不推荐这种方式。
+
+3.各个组件：（图（摘自:http://singleant.iteye.com/blog/1177358））
+  图：ioc-ClassPathXmlApplicationContext类继承体系结构图.jpg
+
+  3.1：Resource体系
+  org.springframework.core.io.Resource：对资源的抽象。它的每一个实现类都代表了一种资源的访问策略
+  如 ClassPathResource,RLRsource,FileSystemResouce等
+  图：ioc-Resource体系.jpg
+
+  3.2 BeanFactory体系：
+  是一个给常纯粹的bean容器，它是Ioc必备的数据结构，其中BeanDefinition是它的基本结构。BeanFactory内部维护着一个
+  BeanDefinition map，并可根据 BeanDefinition 的描述进行bean的创建和管理。
+  图：ioc-beanfactory体系.png
+  BeanFactory有三个直接子类 ListableBeanFactory、HierarchicalBeanFactory 和 AutowireCapableBeanFactory
+  DefaultListableBeanFactory 为最终默认实现，它实现了所有接口
+
+  3.3 BeanDefinition体系：
+  org.springframework.beans.factory.config.BeanDefinition
+  用来描述 Spring 中的 Bean 对象。
+  图：ioc-beandefinition体系.png
+
+  3.4 BeanDefinitionReader体系
+  作用：是读取spring的配置文件内容，并将其装换成ioc容器内部的数据结构：BeanDefinition
+  图：ioc-BeanDefinitionReader体系.png
+
+  3.5 applicationContext体系
+  定义：spring 容器，它叫做应用上下文，与我们息息相关。它集成BeanFactory，所以它是BeanFactory的
+  拓展升级版，如果BeanFactory是屌丝的话，那么ApplicationContext就是名副其实的高富帅。由于ApplcationContext的结构
+  就决定了它与BeanFactory的不同。主要区别有：
+
+    继承 org.springframework.context.MessageSource 接口，提供国际化的标准访问策略。
+    继承 org.springframework.context.ApplicationEventPublisher 接口，提供强大的事件机制。
+    扩展 ResourceLoader ，可以用来加载多种 Resource ，可以灵活访问不同的资源。
+    对 Web 应用的支持。
+
+    图来源：https://blog.csdn.net/yujin753/article/details/47043143
+    图：ApplicationContext体系.png
+
+  从上面五个体系可以看出，ioc主要由spring-beans和spring-context项目，进行实现。
+
+
+

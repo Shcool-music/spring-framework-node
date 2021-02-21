@@ -1,0 +1,62 @@
+在学 Java SE 的时候，我们学习了一个标准类 java.net.URL，该类在 Java SE 中的定位为统一资源定位器（Uniform Resource Locator），但是我们
+知道它的实现基本只限于网络形式发布的资源的查找和定位。然而，实际上资源的定义比较广泛，除了网络形式的资源，还有以二进制形式存在的、以文件形式存在的、
+以字节流形式存在的等等。而且它可以存在于任何场所，比如网络、文件系统、应用程序中。
+所以 java.net.URL 的局限性迫使 Spring 必须实现自己的资源加载策略，该资源加载策略需要满足如下要求：
+
+    职能划分清楚。资源的定义和资源的加载应该要有一个清晰的界限；
+    统一的抽象。统一的资源定义和资源加载策略。资源加载后要返回统一的抽象给客户端，客户端要对资源进行怎样的处理，应该由抽象资源接口来界定。
+
+A Resource 统一资源
+    1. 统一资源：Resource (org.springframework.core.io.Resource) 图：ioc-Resource体系.jpg
+    为 Spring 框架所有资源的抽象和访问接口，它继承 org.springframework.core.io.InputStreamSource接口。作为所有资源的统一抽象，
+    Resource 定义了一些通用的方法，由子类 AbstractResource 提供统一的默认实现
+
+    2.org.springframework.core.io.AbstractResource ，为 Resource 接口的默认抽象实现。它实现了 Resource 接口的大部分的公共实现，
+      作为 Resource 接口中的重中之重。
+      eg:如果我们想要实现自定义的 Resource ，记住不要实现 Resource 接口，而应该继承 AbstractResource 抽象类，
+      然后根据当前的具体资源特性覆盖相应的方法即可。
+
+B 统一资源定位 ResourceLoader （spring 将资源的定义和资源的加载分开了，resource定义了统一的资源，那资源的加载就是由ResourceLoader来统一定义）
+图片：ioc-ResourceLoader体系.png
+    1. ResourceLoader （org.springframework.core.io.ResourceLoader）为Spring资源加载的统一抽象，具体的资源加载则由相应的实现类来完成，所以
+    我们可以将ResourceLoader称为统一资源定位器。
+    FORM《Spring源码深度解析》 ResourceLoader，定义资源加载器，主要应用于根据给定的资源文件地址，返回对应的Resource。
+
+    2.DefaultResourceLoader
+    与abstractResource相似，org.springframework.core.io.DefaultResourceLoader 是 ResourceLoader 的默认实现。
+    构造函数
+    它接收 ClassLoader 作为构造函数的参数，或者使用不带参数的构造函数。
+        在使用不带参数的构造函数时，使用的 ClassLoader 为默认的 ClassLoader（一般 Thread.currentThread()#getContextClassLoader() ）。
+        在使用带参数的构造函数时，可以通过 ClassUtils#getDefaultClassLoader()获取。
+
+    3.ProtocolResolver
+    org.springframework.core.io.ProtocolResolver,用户自定义协议资源解决策略,作为DefaultResourceLoader的SPI：
+    1.允许用户自定义资源加载协议,而不需要集成ResourceLoader的子类。
+    在介绍 Resource 时，提到如果要实现自定义 Resource，我们只需要继承 AbstractResource 即可，但是有了 ProtocolResolver 后，
+    我们不需要直接继承 DefaultResourceLoader，改为实现 ProtocolResolver 接口也可以实现自定义的 ResourceLoader。
+
+    4.FileSystemResourceLoader
+    从例子：DefaultResourceLoaderTest 中可以看到
+    我们看到，其实 DefaultResourceLoader 对#getResourceByPath(String) 方法处理其实不是很恰当，这个时候我们可以使用
+    org.springframework.core.io.FileSystemResourceLoader 。它继承 DefaultResourceLoader ，
+    且覆写了 #getResourceByPath(String) 方法，使之从文件系统加载资源并以 FileSystemResource 类型返回，这样我们就可以得到想要的资源类型。
+
+    5.ClassRelativeResourceLoader
+    org.springframework.core.io.ClassRelativeResourceLoader ，是 DefaultResourceLoader 的另一个子类的实现。和
+    FileSystemResourceLoader 类似，在实现代码的结构上类似，也是覆写 #getResourceByPath(String path) 方法，并返回其对应的 ClassRelativeContextResource 的资源类型
+
+    ClassRelativeResourceLoader 扩展的功能：可以根据给定的class 所在包或者所在包的子包下加载资源
+
+    6.ResourcePatternResolver
+    ResourceLoader 的 Resource getResource(String location) 方法，每次只能根据 location 返回一个 Resource 。当需要加载多个资源时，
+    我们除了多次调用 #getResource(String location) 方法外，别无他法。
+    org.springframework.core.io.support.ResourcePatternResolver 是 ResourceLoader 的扩展，它支持根据指定的资源路径匹配模式每次返回多个 Resource 实例
+
+    7.PathMatchingResourcePatternResolver
+    org.springframework.core.io.support.PathMatchingResourcePatternResolver ，为 ResourcePatternResolver 最常用的子类，
+    它除了支持 ResourceLoader 和 ResourcePatternResolver 新增的 "classpath*:" 前缀外，还支持 Ant 风格的路径匹配模式（类似于 "**/*.xml"）。
+
+
+
+
+
